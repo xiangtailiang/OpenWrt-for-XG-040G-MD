@@ -59,10 +59,10 @@ echo "Starting package updates..."
 UPDATE_PACKAGE "homeproxy" "immortalwrt/homeproxy" "master"
 
 # PassWall (代理软件) - 从 openwrt-passwall 仓库提取
-UPDATE_PACKAGE "passwall" "xiaorouji/openwrt-passwall" "main" "pkg"
+UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
 
 # PassWall 依赖包
-git clone --depth=1 --single-branch --branch main "https://github.com/xiaorouji/openwrt-passwall-packages.git" passwall-packages
+git clone --depth=1 --single-branch --branch main "https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git" passwall-packages
 if [ -d "passwall-packages" ]; then
 	for pkg in passwall-packages/*/; do
 		pkg_name=$(basename "$pkg")
