@@ -12,6 +12,14 @@ on:
         required: false
         default: false
         type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/xg-040g-md-mybranch.yml"
+      - "config/**"
+      - "scripts/**"
+      - "feeds.conf.default"
 
 env:
   CONFIG_FILE: "config/xg-040g-md.config"
@@ -180,4 +188,3 @@ jobs:
             ${{ env.FIRMWARE }}/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
