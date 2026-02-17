@@ -51,6 +51,32 @@ UPDATE_PACKAGE() {
 	echo "Done: $PKG_NAME"
 }
 
+PATCH_PASSWALL_GLOBAL_LUA() {
+	local CANDIDATES=(
+		"./luci-app-passwall/luasrc/model/cbi/passwall/client/global.lua"
+		"./passwall/luci-app-passwall/luasrc/model/cbi/passwall/client/global.lua"
+	)
+	local FOUND=0
+
+	for FILE in "${CANDIDATES[@]}"; do
+		if [ -f "$FILE" ]; then
+			FOUND=1
+			echo "Applying PassWall Lua compatibility hotfix: $FILE"
+
+			# Guard optional form fields to avoid nil-index runtime errors.
+			sed -i 's#local v = s.fields\["shunt_udp_node"\]:formvalue(section)#local v = (s.fields["shunt_udp_node"] and s.fields["shunt_udp_node"]:formvalue(section))#g' "$FILE"
+			sed -i 's#if not f then#if not v then#g' "$FILE"
+			sed -i 's#local dns_shunt_val = s.fields\["dns_shunt"\]:formvalue(section)#local dns_shunt_val = (s.fields["dns_shunt"] and s.fields["dns_shunt"]:formvalue(section)) or ""#g' "$FILE"
+			sed -i 's#s.fields\["dns_mode"\]:formvalue(section) == "xray" or s.fields\["smartdns_dns_mode"\]:formvalue(section) == "xray"#((s.fields["dns_mode"] and s.fields["dns_mode"]:formvalue(section)) == "xray") or ((s.fields["smartdns_dns_mode"] and s.fields["smartdns_dns_mode"]:formvalue(section)) == "xray")#g' "$FILE"
+			sed -i 's#s.fields\["dns_mode"\]:formvalue(section) == "sing-box" or s.fields\["smartdns_dns_mode"\]:formvalue(section) == "sing-box"#((s.fields["dns_mode"] and s.fields["dns_mode"]:formvalue(section)) == "sing-box") or ((s.fields["smartdns_dns_mode"] and s.fields["smartdns_dns_mode"]:formvalue(section)) == "sing-box")#g' "$FILE"
+		fi
+	done
+
+	if [ "$FOUND" -eq 0 ]; then
+		echo "WARNING: PassWall global.lua not found, hotfix skipped."
+	fi
+}
+
 echo "Starting package updates..."
 
 # 首先删除 feeds 中的 sing-box 相关包，避免与第三方包冲突
@@ -67,6 +93,7 @@ UPDATE_PACKAGE "homeproxy" "immortalwrt/homeproxy" "master"
 
 # PassWall (代理软件)
 UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
+PATCH_PASSWALL_GLOBAL_LUA
 
 # PassWall 依赖包
 echo " "
