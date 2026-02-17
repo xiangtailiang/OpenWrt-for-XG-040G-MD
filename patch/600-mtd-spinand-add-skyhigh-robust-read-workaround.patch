@@ -8,7 +8,7 @@
  
  static int spinand_read_reg_op(struct spinand_device *spinand, u8 reg, u8 *val)
  {
-@@ -554,6 +555,22 @@ static int spinand_read_page(struct spin
+@@ -554,6 +555,23 @@ static int spinand_read_page(struct spin
  	if (ret < 0)
  		return ret;
  
