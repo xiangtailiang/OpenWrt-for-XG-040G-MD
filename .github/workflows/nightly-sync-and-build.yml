@@ -1,0 +1,46 @@
+name: Nightly Sync Upstream and Trigger Build
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 03:00 Asia/Shanghai = 19:00 UTC (previous day)
+    - cron: "0 19 * * *"
+
+jobs:
+  sync-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secret
+        run: |
+          if [ -z "${{ secrets.OPENWRT_SYNC_TOKEN }}" ]; then
+            echo "Missing required secret: OPENWRT_SYNC_TOKEN"
+            exit 1
+          fi
+
+      - name: Sync fork branch with upstream
+        env:
+          GH_TOKEN: ${{ secrets.OPENWRT_SYNC_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/xiangtailiang/openwrt/merge-upstream \
+            -f branch='openwrt-25.12'
+
+      - name: Trigger firmware build workflow
+        env:
+          GH_TOKEN: ${{ secrets.OPENWRT_SYNC_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/xiangtailiang/OpenWrt-for-XG-040G-MD/actions/workflows/xg-040g-md-openwrt-25.12.yml/dispatches \
+            -f ref='main'
+
+      - name: Summary
+        run: |
+          echo "✅ Synced xiangtailiang/openwrt:openwrt-25.12 with upstream and triggered xg-040g-md-openwrt-25.12.yml"
