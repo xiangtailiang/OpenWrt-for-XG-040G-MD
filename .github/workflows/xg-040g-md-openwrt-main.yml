@@ -28,6 +28,8 @@ env:
   FEEDS_CONF: feeds.conf.default
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
+  KEEP_RELEASES: 20
+  KEEP_RELEASE_MARKER: "[keep-release]"
   CCACHE_DIR: /mnt/openwrt/ccache
   CCACHE_MAXSIZE: 5G
   TZ: Asia/Shanghai
@@ -236,3 +238,11 @@ jobs:
           keep_minimum_runs: 5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup old GitHub Releases
+        if: env.UPLOAD_RELEASE == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP_RELEASES: ${{ env.KEEP_RELEASES }}
+          KEEP_RELEASE_MARKER: ${{ env.KEEP_RELEASE_MARKER }}
+        run: bash scripts/cleanup-old-releases.sh
