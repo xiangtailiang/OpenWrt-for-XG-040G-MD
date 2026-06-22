@@ -212,7 +212,7 @@ jobs:
         id: tag
         if: env.UPLOAD_RELEASE == 'true'
         run: |
-          echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+          echo "release_tag=$(date +"%Y.%m.%d-%H%M%S")" >> $GITHUB_OUTPUT
           cat <<EOF > release.txt
           🚀 OpenWrt firmware for XG-040G-MD (openwrt-main)
           ----------------------
