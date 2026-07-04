@@ -17,7 +17,7 @@ on:
       - main
     paths:
       - ".github/workflows/xg-040g-md-openwrt-25.12.yml"
-      - "config/**"
+      - "config/xg-040g-md.config"
       - "scripts/**"
       - "feeds.conf.default"
 

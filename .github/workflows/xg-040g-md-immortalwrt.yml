@@ -12,6 +12,9 @@ on:
         required: false
         default: false
         type: boolean
+  schedule:
+    # 02:00 Asia/Shanghai = 18:00 UTC (previous day)
+    - cron: "0 18 * * *"
   push:
     branches:
       - main
