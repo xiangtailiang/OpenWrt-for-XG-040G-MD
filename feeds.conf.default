@@ -1,2 +1,18 @@
 src-git packages https://github.com/openwrt/packages.git;master
 src-git luci https://github.com/openwrt/luci.git;master
+src-git packages https://github.com/openwrt/packages.git
+src-git luci https://github.com/openwrt/luci.git
+src-git routing https://github.com/openwrt/routing.git
+src-git telephony https://github.com/openwrt/telephony.git
+
+# dae / daed
+src-git dae https://github.com/daeuniverse/openwrt-dae.git
+
+# MosDNS
+src-git mosdns https://github.com/sbwml/luci-app-mosdns.git
+
+# Lucky
+src-git lucky https://github.com/gdy666/luci-app-lucky.git
+
+# iStore / luci-app-store
+src-git istore https://github.com/linkease/istore.git
