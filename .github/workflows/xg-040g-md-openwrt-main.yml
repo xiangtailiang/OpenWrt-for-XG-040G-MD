@@ -163,22 +163,27 @@ jobs:
         id: compile
         run: |
           cd openwrt
+          print_build_diagnostics() {
+            echo "Compile failed, disk usage diagnostics:"
+            df -h
+            du -h -d1 . | sort -h | tail -n 30
+          }
+
           echo "Disk usage before compile:"
           df -h
           if [[ "${{ inputs.log_switch }}" == "true" ]]; then
-            make -j1 V=s || {
-              echo "Compile failed, disk usage diagnostics:"
-              df -h
-              du -h -d1 . | sort -h | tail -n 30
+            make -j1 V=sc || {
+              print_build_diagnostics
               exit 1
             }
           else
-            make -j$(nproc) || {
-              echo "Compile failed, disk usage diagnostics:"
-              df -h
-              du -h -d1 . | sort -h | tail -n 30
-              exit 1
-            }
+            if ! make -j"$(nproc)"; then
+              echo "Parallel compile failed; retrying serially with verbose logs..."
+              make -j1 V=sc || {
+                print_build_diagnostics
+                exit 1
+              }
+            fi
           fi
           DEVICE_NAME=$(grep -o 'CONFIG_TARGET.*DEVICE_[^=]*=y' .config | head -1 | sed 's/.*DEVICE_\(.*\)=y/\1/')
           if [[ -n "$DEVICE_NAME" ]]; then
