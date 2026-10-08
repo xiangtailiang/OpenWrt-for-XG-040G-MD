@@ -1,0 +1,4 @@
+src-git dae https://github.com/daeuniverse/openwrt-dae.git
+src-git mosdns https://github.com/sbwml/luci-app-mosdns.git
+src-git lucky https://github.com/gdy666/luci-app-lucky.git
+src-git istore https://github.com/linkease/istore.git

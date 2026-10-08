@@ -1,0 +1,157 @@
+name: Build OpenWrt XG-040G-MD
+
+on:
+  workflow_dispatch:
+    inputs:
+      clean_build:
+        description: "Clean build"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - ".github/workflows/build-xg040gmd.yml"
+      - "configs/**"
+      - "feeds.conf.custom"
+      - "files/**"
+
+env:
+  TZ: Asia/Shanghai
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  build:
+    name: Build Firmware Online
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune -a -f || true
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
+            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
+            fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
+            help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev \
+            libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
+            libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev \
+            mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python3 \
+            python3-pip python3-ply python3-docutils qemu-utils rsync scons \
+            squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim \
+            wget xmlto xxd zlib1g-dev zstd
+
+      - name: Set permissions
+        run: |
+          sudo chown -R $USER:$GROUPS $GITHUB_WORKSPACE
+
+      - name: Clean build
+        if: github.event.inputs.clean_build == 'true'
+        run: |
+          make clean || true
+          make dirclean || true
+
+      - name: Merge custom feeds
+        run: |
+          if [ -f feeds.conf.custom ]; then
+            echo "" >> feeds.conf.default
+            echo "# ===== Custom feeds =====" >> feeds.conf.default
+            cat feeds.conf.custom >> feeds.conf.default
+          fi
+
+          echo "===== feeds.conf.default ====="
+          cat feeds.conf.default
+
+      - name: Update and install feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Merge OpenWrt config
+        run: |
+          if [ ! -f configs/xg040gmd.config ]; then
+            echo "configs/xg040gmd.config not found"
+            exit 1
+          fi
+
+          touch .config
+          cat configs/xg040gmd.config >> .config
+
+          make defconfig
+
+      - name: Show final config
+        run: |
+          echo "===== Target ====="
+          grep -E "CONFIG_TARGET|CONFIG_DEFAULT_TARGET" .config || true
+
+          echo "===== Selected packages ====="
+          grep -E "CONFIG_PACKAGE_(luci|dae|daed|mosdns|lucky|microsocks|store|zram|usb|dnsmasq|geo|v2ray)" .config || true
+
+      - name: Download packages
+        run: |
+          make download -j8 V=s
+
+      - name: Build firmware
+        run: |
+          make -j$(nproc) V=s
+
+      - name: Collect firmware
+        if: always()
+        run: |
+          mkdir -p firmware
+
+          if [ -d bin/targets ]; then
+            find bin/targets -type f \( \
+              -name "*.bin" -o \
+              -name "*.img" -o \
+              -name "*.trx" -o \
+              -name "*.itb" -o \
+              -name "*.ubi" -o \
+              -name "*.ubifs" -o \
+              -name "*.tar" -o \
+              -name "*.gz" -o \
+              -name "*.manifest" -o \
+              -name "sha256sums" \
+            \) -exec cp -v {} firmware/ \;
+          fi
+
+          echo "===== Firmware files ====="
+          ls -lh firmware || true
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: XG-040G-MD-firmware
+          path: firmware
+          retention-days: 30
+
+      - name: Upload build config
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: XG-040G-MD-build-config
+          path: |
+            .config
+            feeds.conf.default
+            feeds.conf.custom
+            configs/xg040gmd.config
+          retention-days: 30
