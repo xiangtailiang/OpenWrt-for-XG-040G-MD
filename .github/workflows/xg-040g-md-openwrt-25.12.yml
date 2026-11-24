@@ -125,7 +125,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a -f
 
-      - name: Install third-party packages (homeproxy, passwall)
+      - name: Install third-party packages
         working-directory: ./openwrt/package
         run: |
           chmod +x $GITHUB_WORKSPACE/scripts/update-packages.sh
@@ -141,6 +141,7 @@ jobs:
         run: |
           cp -fv "${CONFIG_FILE}" openwrt/.config
           cd openwrt && make defconfig
+          grep -Fx 'CONFIG_PACKAGE_luci-app-openclash=y' .config
           [ -e .config ] && cp .config defconfig-final.config
 
       - name: Upload build config files

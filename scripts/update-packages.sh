@@ -131,6 +131,12 @@ echo "Done removing sing-box from feeds"
 # HomeProxy (代理软件) - 使用第5个参数指定额外要删除的包名
 UPDATE_PACKAGE "homeproxy" "immortalwrt/homeproxy" "master"
 
+# OpenClash uses LuCI's host po2lmo to compile translations.
+UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" || exit 1
+OPENCLASH_MAKEFILE="./OpenClash/luci-app-openclash/Makefile"
+sed -i '/^include \$(INCLUDE_DIR)\/package\.mk$/i PKG_BUILD_DEPENDS+=luci-base/host' "$OPENCLASH_MAKEFILE" || exit 1
+grep -Fxq 'PKG_BUILD_DEPENDS+=luci-base/host' "$OPENCLASH_MAKEFILE" || exit 1
+
 # Argon 主题
 UPDATE_PACKAGE "luci-theme-argon" "jerrykuku/luci-theme-argon" "master"
 UPDATE_PACKAGE "luci-app-argon-config" "jerrykuku/luci-app-argon-config" "master"
